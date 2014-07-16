@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+		<script type="text/javascript" src="http://www.parsecdn.com/js/parse-1.2.18.min.js"></script>
+	</head>
+	<body>	
+		<label>Name: </label><input type='text' name='name'></image> 
+		<br/>
+		<label>Image: </label></label><input type = 'file' name='image' id = 'fileselect'></input> 
+		<br />
+		<button id = 'submit'>submit</input>					
+	</body>
+<script>
+	Parse.initialize("xxxxxxxxxxxxxxxxx", "xxxxxxxxxxxxxxxxxxxx");
+
+	//variable that will store selected image
+	var file;
+
+	//grab the file input tag with javascript
+	var fileselect = document.getElementById('fileselect');
+
+	//When the state of the file input button
+	//is changed, the selected file is set equal
+	//to the file var for later use
+	fileselect.onchange = function(e) {
+      var files = e.target.files || e.dataTransfer.files;
+      // Our file var now holds the selected file
+      file = files[0];
+
+		//action listener for submit button
+		$('#submit').click(function() {
+			//define ArtPiece Class
+			var ArtPiece = Parse.Object.extend('ArtPiece');
+			//create an object of Class ArtPiece
+			var artPiece = new ArtPiece();
+
+	        //whitespace is cut out of file's name (if present) using
+	        //regular expressions. File name then used to construct the
+	        //url the file will be stored at on the Cloud
+	        var subDirect = (file.name).replace(/\s+/g, '');
+	        var serverUrl = 'https://api.parse.com/1/files/' + subDirect;
+
+	        //application Id and Rest Key stored in vars for convinient
+	        //later use (both found in Parse settings)
+	        var appID = "xxxxxxxxxxxxxxxxxxxxxxxxxxx";
+	        var restKey = "xxxxxxxxxxxxxxxxxxxxxxxxxx";
+
+	        //HTTP request sent using the jQuery ajax method. If the 
+	        //request is successful the code in the success block saves
+	        //new artPiece object to Parse. If an error occurs an error 
+	        //message is displayed in an alert box
+	        $.ajax({
+	        	type: "POST",
+	        	beforeSend: function(request){
+	        		request.setRequestHeader("X-Parse-Application-Id", appID);
+	                request.setRequestHeader("X-Parse-REST-API-Key", restKey);
+	                request.setRequestHeader("Content-Type", file.type);
+	        	},
+	        	url: serverUrl,
+	        	data: file,
+	        	processData: false,
+	        	contentType: false,
+	        	success: function(data) {
+
+	        		//The uploaded image is assosiated with the 
+	        		//Parse object here
+	        		artPiece.set('image', {
+	        			name: data.url.substring(data.url.lastIndexOf('/') + 1),
+	        			url: data.url,
+	        			__type: "File"
+	        		});
+
+	        		//grab value entered by user for name
+					var name = $('[name="name"]').val();
+					//set the artPiece's piece_name to name
+					artPiece.set('piece_name', name);
+					//save the object
+					artPiece.save();
+	        	},
+	        	error: function() {
+	        		console.log("Error: The image was not uploaded to Parse Properly.");
+	        	}
+	        });
+		});
+	}
+</script>
+</html>
+
+
